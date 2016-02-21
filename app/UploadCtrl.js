@@ -27,44 +27,52 @@ angular.module('app.controller.Upload', ['app.services.Upload'])
       let _files = [];
 
       if ($scope.files.length) {
+        if ($scope.patient.hn) {
+          let _detail = [];
+          $scope.files.forEach((v) => {
+            let _fs = fs.createReadStream(v.path);
+            _files.push(_fs);
+            _detail.push({type: v.type_code, fileName: v.fileName});
+          });
 
-        let _detail = [];
-        $scope.files.forEach((v) => {
-          let _fs = fs.createReadStream(v.path);
-          _files.push(_fs);
-          _detail.push({type: v.type_code, fileName: v.fileName});
-        });
+          var data = {
+            files: _files,
+            patient: JSON.stringify($scope.patient),
+            file_detail: JSON.stringify(_detail)
+          };
 
-        var data = {
-          files: _files,
-          patient: JSON.stringify($scope.patient),
-          file_detail: JSON.stringify(_detail)
-        };
+          UploadService.upload(data)
+            .then(() => {
+              $mdToast.show(
+                $mdToast.simple()
+                  .textContent('อัปโหลดเสร็จเรียบร้อยแล้ว')
+                  .position('right bottom')
+                  .hideDelay(3000)
+              );
 
-        UploadService.upload(data)
-        .then(() => {
+              $scope.files = [];
+              $scope.patient.hn = null;
+              $scope.patient.vn = null;
+              $scope.patient.fullname = null;
+              $scope.patient.an = null;
+              $scope.patient.date_serv = null;
+
+            }, (err) => {
+              $mdToast.show(
+                $mdToast.simple()
+                  .textContent('ไม่สามารถอัปโหลดได้ ' + JSON.stringify(err))
+                  .position('right bottom')
+                  .hideDelay(3000)
+              );
+            });
+        } else {
           $mdToast.show(
             $mdToast.simple()
-              .textContent('อัปโหลดเสร็จเรียบร้อยแล้ว')
+              .textContent('กรุณาระบุชื่อผู้ป่วย')
               .position('right bottom')
               .hideDelay(3000)
           );
-
-          $scope.files = [];
-          $scope.patient.hn = null;
-          $scope.patient.vn = null;
-          $scope.patient.fullname = null;
-          $scope.patient.an = null;
-          $scope.patient.date_serv = null;
-
-        }, (err) => {
-          $mdToast.show(
-            $mdToast.simple()
-              .textContent('ไม่สามารถอัปโหลดได้ ' + JSON.stringify(err))
-              .position('right bottom')
-              .hideDelay(3000)
-          );
-        });
+        }
 
       } else {
         $mdToast.show(
